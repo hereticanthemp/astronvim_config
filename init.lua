@@ -27,6 +27,14 @@ return {
   },
 
   lsp = {
+
+    setup_handlers = {
+      -- add custom handler
+      rust_analyzer = function(_, opts) require("rust-tools").setup { server = opts } end
+    },
+
+    -- skip_setup = { "rust_analyzer" }, -- rust-tools will handle setting up the LSP
+
     -- customize lsp formatting options
     formatting = {
       -- control auto formatting on save
@@ -53,6 +61,20 @@ return {
       -- "pyright"
     },
   },
+  plugins = {
+    init = {
+      {
+        "simrat39/rust-tools.nvim",
+        after = { "mason-lspconfig.nvim" },
+        -- Is configured via the server_registration_override installed below!
+        config = function()
+          require("rust-tools").setup {
+            server = astronvim.lsp.server_settings "rust_analyzer", -- get the server-settings from the AstroNvim tables to allow use with lsp.server-settings and lsp.on_attach user configuration
+          }
+        end,
+      },
+    },
+  },
 
   -- Configure require("lazy").setup() options
   lazy = {
@@ -69,6 +91,20 @@ return {
   -- augroups/autocommands and custom filetypes also this just pure lua so
   -- anything that doesn't fit in the normal config locations above can go here
   polish = function()
+
+local rt = require("rust-tools")
+
+rt.setup({
+  server = {
+    on_attach = function(_, bufnr)
+      -- Hover actions
+      vim.keymap.set("n", "<C-space>", rt.hover_actions.hover_actions, { buffer = bufnr })
+      -- Code action groups
+      vim.keymap.set("n", "<Leader>a", rt.code_action_group.code_action_group, { buffer = bufnr })
+    end,
+  },
+})
+
     -- Set up custom filetypes
     -- vim.filetype.add {
     --   extension = {
